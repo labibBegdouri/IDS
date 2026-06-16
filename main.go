@@ -15,12 +15,17 @@ import (
 )
 
 type ipInfo struct {
-	distinctPorts int
-	syns          int
-	acks          int
-	sshs          int
-	icmps         int
-	ports         []layers.TCPPort
+	distinctPorts  int
+	syns           int
+	acks           int
+	sshs           int
+	fins           int
+	vide           int
+	finUrgPsh      int
+	icmps          int
+	udp            int
+	ArpMacResponse string
+	ports          []layers.TCPPort
 }
 type IDS struct {
 	myIpAddress net.IP
@@ -42,6 +47,7 @@ const (
 	NBRSCANPorts = 30
 	TIMELIMITE   = 10 // IN MILLISECONDS
 	NBRSCANICMP  = 2000
+	NBRSCANUDP   = 2000
 	SNAPLEN      = 1600
 	PROMISCUOUS  = true
 )

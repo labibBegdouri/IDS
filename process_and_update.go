@@ -10,9 +10,16 @@ import (
 )
 
 func (ids *IDS) process_goPacket(packet gopacket.Packet) {
-	var layerIP gopacket.Layer
-	if layerIP = packet.Layer(layers.LayerTypeIPv4); layerIP == nil {
-		return
+	if layerIP := packet.Layer(layers.LayerTypeIPv4); layerIP == nil {
+		var layerARP gopacket.Layer
+		if layerARP = packet.Layer(layers.LayerTypeARP); layerARP == nil {
+			return
+		}
+		arp := layerARP.(*layers.ARP)
+		if arp.Operation == 2 {
+
+		}
+
 	}
 	ids.updateDatabase(packet)
 }
@@ -34,7 +41,18 @@ func (ids *IDS) updateMemTcp(tcp *layers.TCP, strIP string) {
 		ids.memory[strIP].ports = append(ids.memory[strIP].ports, tcp.DstPort)
 		ids.memory[strIP].distinctPorts = ids.memory[strIP].distinctPorts + 1
 	}
+	if tcp.FIN {
+		ids.memory[strIP].fins = ids.memory[strIP].fins + 1
 
+	}
+	if !tcp.ACK && !tcp.SYN && !tcp.RST && !tcp.ECE && !tcp.URG && !tcp.PSH {
+		ids.memory[strIP].vide = ids.memory[strIP].vide + 1
+
+	}
+	if tcp.FIN && tcp.URG && tcp.PSH {
+		ids.memory[strIP].finUrgPsh = ids.memory[strIP].finUrgPsh + 1
+
+	}
 }
 
 // for the moment only packets that use IPV4 ( so no ARP)
@@ -67,6 +85,16 @@ func (ids *IDS) updateDatabase(packet gopacket.Packet) {
 			return
 
 		}
+		layerUDP := packet.Layer(layers.LayerTypeUDP)
+		udp, _ := layerUDP.(*layers.UDP)
+		if udp != nil {
+			ids.memory[strIP].udp += 1
+			if ids.memory[strIP].udp+ids.precmemory[strIP].udp > NBRSCANICMP {
+				ids.writelog("Is Creating an UDP FLOOD ", strIP)
+				ids.memory[strIP].udp = 0
+			}
+			return
+		}
 		layerICMP := packet.Layer(layers.LayerTypeICMPv4)
 		icmp, _ := layerICMP.(*layers.ICMPv4)
 		if icmp != nil {
@@ -78,6 +106,20 @@ func (ids *IDS) updateDatabase(packet gopacket.Packet) {
 			return
 
 		}
+	} else {
+		layerARP := packet.Layer(layers.LayerTypeARP)
+		arp := layerARP.(*layers.ARP)
+		if arp != nil && arp.Operation == 2 { // reply
+			var strIP string = string(arp.SourceProtAddress)
+			if ids.memory[strIP].ArpMacResponse == "" {
+				ids.memory[strIP].ArpMacResponse = string(arp.SourceHwAddress)
+
+			} else {
+				ids.verifyAttackARP(strIP, string(arp.SourceHwAddress))
+				return
+			}
+		}
+
 	}
 }
 
