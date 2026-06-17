@@ -13,16 +13,35 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
-func myIP() net.IP {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
+func (ids *IDS) myIP() string {
+	// conn, err := net.Dial("udp", "8.8.8.8:80")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// defer conn.Close()
+
+	// localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	// return localAddr.IP
+	interfaces, err := net.Interfaces()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer conn.Close()
+	for _, v := range interfaces {
+		if v.Name == ids.iface {
+			addrs, err := v.Addrs()
+			if err != nil {
+				log.Fatal(err)
 
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
+			}
+			for _, v := range addrs {
+				return v.String()[:len(v.String())-3]
+			}
+		}
+	}
+	log.Fatal("there is no such interface")
+	return ""
 
-	return localAddr.IP
 }
 func (ids *IDS) getWhitelist() []string {
 
@@ -46,7 +65,7 @@ func (ids *IDS) getWhitelist() []string {
 	return strList
 }
 
-func (ids *IDS) openlive_filterWhitelist() *pcap.Handle {
+func (ids *IDS) openLiveAnddFilter() *pcap.Handle {
 	var err error
 	var handle *pcap.Handle
 	var filter string
@@ -54,17 +73,20 @@ func (ids *IDS) openlive_filterWhitelist() *pcap.Handle {
 	ids.whitelist = "./whitelist.txt"
 	whitelist := ids.getWhitelist()
 
-	if handle, err = pcap.OpenLive(ids.IFACE, SNAPLEN, PROMISCUOUS, TIMELIMITE*time.Millisecond); err != nil {
+	if handle, err = pcap.OpenLive(ids.iface, SNAPLEN, PROMISCUOUS, TIMELIMITE*time.Millisecond); err != nil {
 		log.Fatal(err)
 	} else {
-		ids.myIpAddress = myIP()
-		filter += fmt.Sprint("not src host ", ids.myIpAddress)
+		ids.myIpAddress = ids.myIP()
+		filter += fmt.Sprint("( not src host ", ids.myIpAddress)
 
 		for _, v := range whitelist {
 			filter += fmt.Sprint(" and not src host ", v)
 
 		}
-		err = handle.SetBPFFilter(filter)
+		filter += " )"
+		filter += fmt.Sprint(" or ( ( src host ", ids.myIpAddress, ") and (udp) )")
+
+		// err = handle.SetBPFFilter(filter)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -72,7 +94,7 @@ func (ids *IDS) openlive_filterWhitelist() *pcap.Handle {
 	}
 	return handle
 }
-func (ids *IDS) arguemnts_management() bool {
+func (ids *IDS) arguemntsManagement() bool {
 	args := os.Args
 	if len(args) != 2 {
 		fmt.Println("Incorrect number of arguments")
@@ -80,7 +102,7 @@ func (ids *IDS) arguemnts_management() bool {
 		fmt.Println("sudo go run ./ids.go <interface name>")
 		return false
 	} else {
-		ids.IFACE = args[1]
+		ids.iface = args[1]
 		return true
 
 	}

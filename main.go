@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"maps"
-	"net"
 	"os"
 	"time"
 
@@ -24,17 +23,19 @@ type ipInfo struct {
 	finUrgPsh      int
 	icmps          int
 	udp            int
-	ArpMacResponse string
+	dnsRequests    int
+	dnsResponse    int
+	arpMacResponse string
 	ports          []layers.TCPPort
 }
 type IDS struct {
-	myIpAddress net.IP
+	myIpAddress string
 	logFile     *os.File
 	writer      *bufio.Writer
-	IFACE       string
+	iface       string
 	whitelist   string
 	memory      map[string]*ipInfo
-	precmemory  map[string]*ipInfo
+	precMemory  map[string]*ipInfo
 }
 
 // var IFACE = "wlp58s0"
@@ -58,7 +59,7 @@ func main() {
 	var packet gopacket.Packet
 	ids := new(IDS)
 	ids.memory = make(map[string]*ipInfo)
-	ids.precmemory = make(map[string]*ipInfo)
+	ids.precMemory = make(map[string]*ipInfo)
 
 	ids.logFile, err = os.OpenFile("ids.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -68,40 +69,40 @@ func main() {
 
 	ids.writer = bufio.NewWriter(ids.logFile)
 
-	if !ids.arguemnts_management() {
+	if !ids.arguemntsManagement() {
 		return
 	}
 
 	channel := make(chan gopacket.Packet, CHANNELSIZE)
 	tot := 0
 
-	handle = ids.openlive_filterWhitelist()
+	handle = ids.openLiveAnddFilter()
 
 	packetSource := gopacket.NewPacketSource(handle, layers.LinkTypeEthernet)
 	packetSource.NoCopy = true
 
 	go getPacket(packetSource, channel)
 
-	t0 := time.NewTicker(PERIOD * time.Second)
+	ticker := time.NewTicker(PERIOD * time.Second)
 	var i int
 
 	for {
 		i = 0
-	Maboucle: // on nomme la boucle
+	maBoucle: // on nomme la boucle
 		for {
 
 			select {
-			case <-t0.C:
+			case <-ticker.C:
 				tot += i
 				vitess := (float64(i)) / PERIOD
 				fmt.Fprint(ids.writer, fmt.Sprint("[", time.Now().Format("Mon Jan 02 15:04:05 2006"), "] ", PERIOD, " seconds summary: ", i, " packets of ", tot, " || ", vitess, " packets per second ", " !!\n"))
-				ids.precmemory = maps.Clone(ids.memory)
+				ids.precMemory = maps.Clone(ids.memory)
 				clear(ids.memory)
-				break Maboucle //sans l'étiquette break est inutile ( ça sert de sortir de select ce qui se fait automatiquement)
+				break maBoucle //sans l'étiquette break est inutile ( ça sert de sortir de select ce qui se fait automatiquement)
 
 			case packet = <-channel:
 				i++
-				ids.process_goPacket(packet)
+				ids.processGoPacket(packet)
 
 			}
 		}

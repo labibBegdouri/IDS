@@ -1,51 +1,62 @@
 package main
 
+import "fmt"
+
 // QUE ARP UDP TCP POUR IPV4 POUR LE MOMENT
-func ratioSynAck(syn int, ack int) int {
-	return syn - ack
-}
 
 func (ids *IDS) verifyAttackTCP(strIP string) {
-	if ratioSynAck(ids.memory[strIP].syns, ids.memory[strIP].acks)+ratioSynAck(ids.precmemory[strIP].syns, ids.precmemory[strIP].acks) > NBRSCANSYN {
-		ids.writelog("Is DDos attacking you", strIP)
+	if (ids.memory[strIP].syns - ids.memory[strIP].acks + -ids.precMemory[strIP].acks) > NBRSCANSYN {
+		ids.writeLog("Is DDos attacking you", strIP)
 		ids.memory[strIP].syns = 0
-		ids.precmemory[strIP].syns = 0
+		ids.precMemory[strIP].syns = 0
 	}
-	if ids.memory[strIP].sshs+ids.precmemory[strIP].sshs > NBRSCANSSH {
-		ids.writelog("Is bruteforcing you ssh Password", strIP)
+	if ids.memory[strIP].sshs+ids.precMemory[strIP].sshs > NBRSCANSSH {
+		ids.writeLog("Is bruteforcing you ssh Password", strIP)
 		ids.memory[strIP].sshs = 0
-		ids.precmemory[strIP].sshs = 0
+		ids.precMemory[strIP].sshs = 0
 	}
-	if ids.memory[strIP].distinctPorts+ids.precmemory[strIP].distinctPorts > NBRSCANPorts {
-		ids.writelog("Is scanning your ports", strIP)
+	if ids.memory[strIP].distinctPorts+ids.precMemory[strIP].distinctPorts > NBRSCANPorts {
+		ids.writeLog("Is scanning your ports", strIP)
 		ids.memory[strIP].distinctPorts = 0
-		ids.precmemory[strIP].distinctPorts = 0
+		ids.precMemory[strIP].distinctPorts = 0
 
 	}
-	if ids.memory[strIP].fins+ids.precmemory[strIP].fins > NBRSCANSYN {
-		ids.writelog("Is spamming Fin flag", strIP)
+	if ids.memory[strIP].fins+ids.precMemory[strIP].fins > NBRSCANSYN {
+		ids.writeLog("Is spamming Fin flag", strIP)
 		ids.memory[strIP].fins = 0
-		ids.precmemory[strIP].fins = 0
+		ids.precMemory[strIP].fins = 0
 
 	}
-	if ids.memory[strIP].vide+ids.precmemory[strIP].vide > NBRSCANSYN {
-		ids.writelog("Is spamming packets with no flags", strIP)
+	if ids.memory[strIP].vide+ids.precMemory[strIP].vide > NBRSCANSYN {
+		ids.writeLog("Is spamming packets with no flags", strIP)
 		ids.memory[strIP].vide = 0
-		ids.precmemory[strIP].vide = 0
+		ids.precMemory[strIP].vide = 0
 
 	}
-	if ids.memory[strIP].finUrgPsh+ids.precmemory[strIP].finUrgPsh > NBRSCANSYN {
-		ids.writelog("Is spamming packets with no flags", strIP)
+	if ids.memory[strIP].finUrgPsh+ids.precMemory[strIP].finUrgPsh > NBRSCANSYN {
+		ids.writeLog("Is spamming packets with no flags", strIP)
 		ids.memory[strIP].finUrgPsh = 0
-		ids.precmemory[strIP].finUrgPsh = 0
+		ids.precMemory[strIP].finUrgPsh = 0
 
 	}
 
+}
+
+func (ids *IDS) verifyAttackUDP(strIP string) {
+	if ids.memory[strIP].udp+ids.precMemory[strIP].udp > NBRSCANICMP {
+		ids.writeLog("Is Creating an UDP FLOOD ", strIP)
+		ids.memory[strIP].udp = 0
+	}
+	if ids.memory[strIP].dnsResponse-ids.memory[strIP].dnsRequests > NBRSCANSYN {
+		ids.writeLog("Someone Is Ddos attacking you (DNS amplification) ", "")
+
+	}
 }
 
 func (ids *IDS) verifyAttackARP(strIP string, Mac string) {
-	if ids.memory[strIP].ArpMacResponse != "" && ids.memory[strIP].ArpMacResponse != Mac {
+	if ids.memory[strIP].arpMacResponse != "" && ids.memory[strIP].arpMacResponse != Mac {
 
-		ids.writelog("Is ARP poisining", strIP)
+		ids.writeLog("Is ARP poisining", strIP)
+		fmt.Println("Is ARP poisining ", strIP)
 	}
 }
