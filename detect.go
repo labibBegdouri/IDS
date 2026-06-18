@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 // QUE ARP UDP TCP POUR IPV4 POUR LE MOMENT
 
 func (ids *IDS) verifyAttackTCP(strIP string) {
@@ -54,9 +52,7 @@ func (ids *IDS) verifyAttackUDP(strIP string) {
 }
 
 func (ids *IDS) verifyAttackARP(strIP string, Mac string) {
-	if ids.memory[strIP].arpMacResponse != "" && ids.memory[strIP].arpMacResponse != Mac {
-
-		ids.writeLog("Is ARP poisining", strIP)
-		fmt.Println("Is ARP poisining ", strIP)
+	if ids.memory[strIP].arpMacResponse != Mac {
+		ids.writeLog("Is ARP poisening or being poisened", strIP)
 	}
 }

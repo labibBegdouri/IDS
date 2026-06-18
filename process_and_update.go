@@ -3,11 +3,31 @@ package main
 import (
 	"fmt"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 )
+
+func AddrbyteToString(bytes []byte, base int) string {
+	str := ""
+	for i, v := range bytes {
+		var num uint8 = v
+		if base == 16 {
+			str += fmt.Sprintf("%02x", num)
+		} else {
+			str += strconv.FormatUint(uint64(num), base)
+
+		}
+
+		if i <= len(bytes)-2 {
+			str += "."
+		}
+
+	}
+	return str
+}
 
 func (ids *IDS) processGoPacket(packet gopacket.Packet) {
 	if layerIP := packet.Layer(layers.LayerTypeIPv4); layerIP == nil {
@@ -80,22 +100,9 @@ func (ids *IDS) updateDatabase(packet gopacket.Packet) {
 	ip, _ := ipPacket.(*layers.IPv4)
 	if ip != nil {
 		strIP := ip.SrcIP.String()
-		_, bol := ids.memory[strIP]
-		if !bol {
-			stru := new(ipInfo)
-			port := make([]layers.TCPPort, 0)
-			stru.ports = port
-			ids.memory[strIP] = stru
 
-		}
-		_, bol = ids.precMemory[strIP]
-		if !bol {
-			stru := new(ipInfo)
-			port := make([]layers.TCPPort, 0)
-			stru.ports = port
-			ids.precMemory[strIP] = stru
+		ids.initInCase(strIP)
 
-		}
 		layerUDP := packet.Layer(layers.LayerTypeUDP)
 		udp, _ := layerUDP.(*layers.UDP)
 		if udp != nil {
@@ -124,22 +131,28 @@ func (ids *IDS) updateDatabase(packet gopacket.Packet) {
 
 			}
 		}
-		layerARP := packet.Layer(layers.LayerTypeARP)
-		if layerARP != nil {
+	}
+	layerARP := packet.Layer(layers.LayerTypeARP)
+	if layerARP != nil {
 
-			arp := layerARP.(*layers.ARP)
-			if arp != nil && arp.Operation == 2 { // reply
-				var strIP string = string(arp.SourceProtAddress)
-				if ids.memory[strIP].arpMacResponse == "" {
-					ids.memory[strIP].arpMacResponse = string(arp.SourceHwAddress)
-
-				} else {
-					ids.verifyAttackARP(strIP, string(arp.SourceHwAddress))
-					return
-				}
+		arp := layerARP.(*layers.ARP)
+		if arp != nil && arp.Operation == 2 { // reply
+			var strIP string = AddrbyteToString(arp.SourceProtAddress, 10)
+			if strIP == ids.myIpAddress {
+				return
 			}
+			ids.initInCase(strIP)
 
+			// ### FUCK
+			if ids.memory[strIP].arpMacResponse == "" {
+				ids.memory[strIP].arpMacResponse = AddrbyteToString(arp.SourceHwAddress, 16)
+
+			} else {
+				ids.verifyAttackARP(strIP, AddrbyteToString(arp.SourceHwAddress, 16))
+				return
+			}
 		}
+
 	}
 }
 

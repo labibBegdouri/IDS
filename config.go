@@ -10,19 +10,12 @@ import (
 	"time"
 
 	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	"github.com/mostlygeek/arp"
 )
 
 func (ids *IDS) myIP() string {
-	// conn, err := net.Dial("udp", "8.8.8.8:80")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer conn.Close()
-
-	// localAddr := conn.LocalAddr().(*net.UDPAddr)
-
-	// return localAddr.IP
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		log.Fatal(err)
@@ -124,4 +117,32 @@ func getPacket(packetSource *gopacket.PacketSource, channel chan gopacket.Packet
 
 	}
 
+}
+
+func (ids *IDS) initInCase(strIP string) {
+
+	_, bol := ids.memory[strIP]
+	if !bol {
+		stru := new(ipInfo)
+		port := make([]layers.TCPPort, 0)
+		stru.ports = port
+		ids.memory[strIP] = stru
+
+	}
+	_, bol = ids.precMemory[strIP]
+	if !bol {
+		stru := new(ipInfo)
+		port := make([]layers.TCPPort, 0)
+		stru.ports = port
+		ids.precMemory[strIP] = stru
+
+	}
+}
+
+func (ids *IDS) getARPCache() {
+	for ip, _ := range arp.Table() {
+		ids.initInCase(ip)
+		ids.memory[ip].arpMacResponse = arp.Search(ip)
+
+	}
 }

@@ -53,6 +53,22 @@ const (
 	PROMISCUOUS  = true
 )
 
+func load(i int) string {
+	str := ""
+	for k := 0; k <= i; k++ {
+		str += "."
+	}
+	return str
+}
+
+func loading() {
+	for {
+		for i := 0; i < 3; i++ {
+			fmt.Printf("\rRunning %s", load(i))
+		}
+	}
+}
+
 func main() {
 	var handle *pcap.Handle
 	var err error
@@ -82,12 +98,14 @@ func main() {
 	packetSource.NoCopy = true
 
 	go getPacket(packetSource, channel)
+	// go loading()
 
 	ticker := time.NewTicker(PERIOD * time.Second)
 	var i int
 
 	for {
 		i = 0
+		ids.getARPCache()
 	maBoucle: // on nomme la boucle
 		for {
 
