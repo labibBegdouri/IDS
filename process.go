@@ -46,7 +46,7 @@ func (ids *IDS) processGoPacket(packet gopacket.Packet) {
 	ids.updateDatabase(packet)
 }
 
-// for the moment only packets that use IPV4 ( so no ARP)
+// for the moment only packets that use IPV4
 func (ids *IDS) updateDatabase(packet gopacket.Packet) {
 	ipPacket := packet.Layer(layers.LayerTypeIPv4)
 	ip, _ := ipPacket.(*layers.IPv4)

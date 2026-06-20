@@ -53,7 +53,7 @@ func (ids *IDS) verifyAttackTCP(strIP string) {
 		ids.precMemory[strIP].vide = 0
 	}
 
-	// 6. XMAS Scan ( FIN, URG, PSH)
+	//  XMAS Scan ( FIN, URG, PSH)
 	if (mem.finUrgPsh + prec.finUrgPsh) > MaxXmas {
 		msg := "[WARNING] TCP XMAS Scan détecté. (Combinaison de flags anormale)"
 		ids.writeLog(msg, strIP)
@@ -77,7 +77,7 @@ func (ids *IDS) verifyAttackUDP(strIP string) {
 		ids.precMemory[strIP].udp = 0
 	}
 
-	// 2. DNS Amplification Attack
+	//  DNS Amplification Attack
 	if (ids.memory["ALL"].dnsResponse + ids.precMemory["ALL"].dnsResponse - ids.memory["ALL"].dnsRequests - ids.precMemory["ALL"].dnsRequests) > MaxDNSResMinusReq {
 		ids.writeLog("[CRITICAL] Attaque DDoS par amplification DNS détectée (Réponses >> Requêtes).", "")
 		ids.memory["ALL"].dnsResponse = 0
