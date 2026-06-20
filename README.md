@@ -2,6 +2,10 @@
 
 A Network Intrusion Detection System written in Go, built on top of [`gopacket`](https://github.com/google/gopacket). It captures live traffic on a network interface, tracks per-IP behavioral statistics over sliding time windows, and flags patterns associated with common reconnaissance and flooding attacks.
 
+## Goal
+
+Built to gain practical experience in analyzing network traffic and exploring the foundations of cybersecurity. It showcases the ability to write efficient Go code and design systems capable of handling complex, simultaneous tasks.
+
 
 ## Detected attack patterns
 
