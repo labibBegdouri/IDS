@@ -1,8 +1,7 @@
-# NIDS — Network Intrusion Detection System
+# NIDS — Network Intrusion Detection System Project
 
 A Network Intrusion Detection System written in Go, built on top of [`gopacket`](https://github.com/google/gopacket). It captures live traffic on a network interface, tracks per-IP behavioral statistics over sliding time windows, and flags patterns associated with common reconnaissance and flooding attacks.
 
-This is the first phase of a longer plan: validate the detection logic in Go, then reimplement the core in C, and later add a Python/scikit-learn layer for ML-based detection.
 
 ## Detected attack patterns
 
