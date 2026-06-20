@@ -15,6 +15,15 @@ import (
 	"github.com/mostlygeek/arp"
 )
 
+const (
+	PERIOD          = 4
+	NormaleDuration = 5 // in ticks which is period seconds
+	CHANNELSIZE     = 10000
+	TimeLimite      = 10 // IN MILLISECONDS
+	SNAPLEN         = 1600
+	Promiscious     = true
+)
+
 func (ids *IDS) myIP() string {
 	interfaces, err := net.Interfaces()
 	if err != nil {
@@ -28,7 +37,11 @@ func (ids *IDS) myIP() string {
 
 			}
 			for _, v := range addrs {
-				return v.String()[:len(v.String())-3]
+				ip, _, err := net.ParseCIDR(v.String())
+				if err != nil {
+					log.Fatal(err)
+				}
+				return ip.String()
 			}
 		}
 	}
@@ -66,20 +79,18 @@ func (ids *IDS) openLiveAnddFilter() *pcap.Handle {
 	ids.whitelist = "./whitelist.txt"
 	whitelist := ids.getWhitelist()
 
-	if handle, err = pcap.OpenLive(ids.iface, SNAPLEN, PROMISCUOUS, TIMELIMITE*time.Millisecond); err != nil {
+	if handle, err = pcap.OpenLive(ids.iface, SNAPLEN, Promiscious, TimeLimite*time.Millisecond); err != nil {
 		log.Fatal(err)
 	} else {
 		ids.myIpAddress = ids.myIP()
-		filter += fmt.Sprint("( not src host ", ids.myIpAddress)
+		filter += fmt.Sprint(" not src host ", ids.myIpAddress)
 
 		for _, v := range whitelist {
 			filter += fmt.Sprint(" and not src host ", v)
 
 		}
-		filter += " )"
-		filter += fmt.Sprint(" or ( ( src host ", ids.myIpAddress, ") and (udp) )")
 
-		// err = handle.SetBPFFilter(filter)
+		err = handle.SetBPFFilter(filter)
 		if err != nil {
 			log.Fatal(err)
 		}

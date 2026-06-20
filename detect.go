@@ -1,58 +1,93 @@
 package main
 
-// QUE ARP UDP TCP POUR IPV4 POUR LE MOMENT
+import "fmt"
+
+const (
+	MaxSYNMinusAck       = 5000
+	MaxFin               = 500
+	MaxNull              = 500
+	MaxXmas              = 500
+	MaxSSHConnection     = 20
+	MaxNbrPortsDistincts = 30
+	MaxICMPS             = 6000
+	MaxUDP               = 5000
+	MaxDNSResMinusReq    = 4000
+)
 
 func (ids *IDS) verifyAttackTCP(strIP string) {
-	if (ids.memory[strIP].syns - ids.memory[strIP].acks + -ids.precMemory[strIP].acks) > NBRSCANSYN {
-		ids.writeLog("Is DDos attacking you", strIP)
+	mem := ids.memory[strIP]
+	prec := ids.precMemory[strIP]
+
+	if (mem.syns + prec.syns - mem.acks - prec.acks) > MaxSYNMinusAck {
+		msg := fmt.Sprintf("[CRITICAL] TCP SYN Flood detecté. (Seuil: %d)", MaxSYNMinusAck)
+		ids.writeLog(msg, strIP)
 		ids.memory[strIP].syns = 0
 		ids.precMemory[strIP].syns = 0
 	}
-	if ids.memory[strIP].sshs+ids.precMemory[strIP].sshs > NBRSCANSSH {
-		ids.writeLog("Is bruteforcing you ssh Password", strIP)
+
+	if (mem.sshs + prec.sshs) > MaxSSHConnection {
+		msg := fmt.Sprintf("[WARNING] Tentative de SSH Brute Force. (%d tentatives)", mem.sshs+prec.sshs)
+		ids.writeLog(msg, strIP)
 		ids.memory[strIP].sshs = 0
 		ids.precMemory[strIP].sshs = 0
 	}
-	if ids.memory[strIP].distinctPorts+ids.precMemory[strIP].distinctPorts > NBRSCANPorts {
-		ids.writeLog("Is scanning your ports", strIP)
+
+	if (mem.distinctPorts + prec.distinctPorts) > MaxNbrPortsDistincts {
+		msg := fmt.Sprintf("[WARNING] Scan de ports détecté. (%d ports touchés)", mem.distinctPorts+prec.distinctPorts)
+		ids.writeLog(msg, strIP)
 		ids.memory[strIP].distinctPorts = 0
 		ids.precMemory[strIP].distinctPorts = 0
-
 	}
-	if ids.memory[strIP].fins+ids.precMemory[strIP].fins > NBRSCANSYN {
-		ids.writeLog("Is spamming Fin flag", strIP)
+
+	if (mem.fins + prec.fins) > MaxFin {
+		msg := "[WARNING] TCP FIN Scan/Flood détecté. (Flag FIN abusif)"
+		ids.writeLog(msg, strIP)
 		ids.memory[strIP].fins = 0
 		ids.precMemory[strIP].fins = 0
-
 	}
-	if ids.memory[strIP].vide+ids.precMemory[strIP].vide > NBRSCANSYN {
-		ids.writeLog("Is spamming packets with no flags", strIP)
+
+	if (mem.vide + prec.vide) > MaxNull {
+		msg := "[WARNING] TCP Null Scan détecté. (Paquets sans flags TCP)"
+		ids.writeLog(msg, strIP)
 		ids.memory[strIP].vide = 0
 		ids.precMemory[strIP].vide = 0
-
 	}
-	if ids.memory[strIP].finUrgPsh+ids.precMemory[strIP].finUrgPsh > NBRSCANSYN {
-		ids.writeLog("Is spamming packets with no flags", strIP)
+
+	// 6. XMAS Scan ( FIN, URG, PSH)
+	if (mem.finUrgPsh + prec.finUrgPsh) > MaxXmas {
+		msg := "[WARNING] TCP XMAS Scan détecté. (Combinaison de flags anormale)"
+		ids.writeLog(msg, strIP)
 		ids.memory[strIP].finUrgPsh = 0
 		ids.precMemory[strIP].finUrgPsh = 0
-
 	}
+}
 
+func (ids *IDS) verifyAttackICMP(strIP string) {
+	if (ids.memory[strIP].icmps + ids.precMemory[strIP].icmps) > MaxICMPS {
+		ids.writeLog("[CRITICAL] ICMP Ping Flood détecté.", strIP)
+		ids.memory[strIP].icmps = 0
+		ids.precMemory[strIP].icmps = 0
+	}
 }
 
 func (ids *IDS) verifyAttackUDP(strIP string) {
-	if ids.memory[strIP].udp+ids.precMemory[strIP].udp > NBRSCANICMP {
-		ids.writeLog("Is Creating an UDP FLOOD ", strIP)
+	if (ids.memory[strIP].udp + ids.precMemory[strIP].udp) > MaxUDP {
+		ids.writeLog("[CRITICAL] UDP Flood détecté.", strIP)
 		ids.memory[strIP].udp = 0
+		ids.precMemory[strIP].udp = 0
 	}
-	if ids.memory[strIP].dnsResponse-ids.memory[strIP].dnsRequests > NBRSCANSYN {
-		ids.writeLog("Someone Is Ddos attacking you (DNS amplification) ", "")
 
+	// 2. DNS Amplification Attack
+	if (ids.memory["ALL"].dnsResponse + ids.precMemory["ALL"].dnsResponse - ids.memory["ALL"].dnsRequests - ids.precMemory["ALL"].dnsRequests) > MaxDNSResMinusReq {
+		ids.writeLog("[CRITICAL] Attaque DDoS par amplification DNS détectée (Réponses >> Requêtes).", "")
+		ids.memory["ALL"].dnsResponse = 0
+		ids.memory["ALL"].dnsRequests = 0
 	}
 }
 
-func (ids *IDS) verifyAttackARP(strIP string, Mac string) {
-	if ids.memory[strIP].arpMacResponse != Mac {
-		ids.writeLog("Is ARP poisening or being poisened", strIP)
+func (ids *IDS) verifyAttackARP(strIP string, mac string) {
+	if ids.memory[strIP].arpMacResponse != mac && ids.memory[strIP].arpMacResponse != "" {
+		msg := "[CRITICAL] ARP Spoofing/Poisoning possible. Conflit de MAC pour l'IP."
+		ids.writeLog(msg, strIP)
 	}
 }
