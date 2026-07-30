@@ -54,6 +54,7 @@ func (ids *IDS) updateDatabase(packet gopacket.Packet) {
 		strIP := ip.SrcIP.String()
 
 		ids.initInCase(strIP)
+		ids.initInCase("ALL")
 
 		layerUDP := packet.Layer(layers.LayerTypeUDP)
 		udp, _ := layerUDP.(*layers.UDP)

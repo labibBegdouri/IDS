@@ -7,6 +7,7 @@ import (
 	"maps"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -34,7 +35,17 @@ func main() {
 	ids.precMemory = make(map[string]*ipInfo)
 	ids.initInCase("ALL")
 
-	ids.logFile, err = os.OpenFile("ids.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	logPath := "./logs/ids.go"
+	dir := filepath.Dir(logPath)
+
+	// 2. Créer le répertoire parent (et ses parents si nécessaire)
+	// 0755 est la permission standard pour les répertoires
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
+		log.Fatal(err)
+
+	}
+	ids.logFile, err = os.OpenFile("./logs/ids.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -10,7 +10,7 @@ const (
 	MaxSSHConnection     = 20
 	MaxNbrPortsDistincts = 30
 	MaxICMPS             = 6000
-	MaxUDP               = 5000
+	MaxUDP               = 10000
 	MaxDNSResMinusReq    = 4000
 )
 
