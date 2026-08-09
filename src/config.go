@@ -76,7 +76,7 @@ func (ids *IDS) openLiveAnddFilter() *pcap.Handle {
 	var handle *pcap.Handle
 	var filter string
 
-	ids.whitelist = "./whitelist.txt"
+	ids.whitelist = "../whitelist.txt"
 	whitelist := ids.getWhitelist()
 
 	if handle, err = pcap.OpenLive(ids.iface, SNAPLEN, Promiscious, TimeLimite*time.Millisecond); err != nil {
