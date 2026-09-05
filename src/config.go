@@ -19,9 +19,9 @@ const (
 	PERIOD          = 4
 	NormaleDuration = 5 // in ticks which is period seconds
 	CHANNELSIZE     = 10000
-	TimeLimite      = 10 // IN MILLISECONDS
+	TIMELIMITE      = 10 // IN MILLISECONDS
 	SNAPLEN         = 1600
-	Promiscious     = true
+	ISPROMISCIOUS   = true
 )
 
 func (ids *IDS) myIP() string {
@@ -76,10 +76,10 @@ func (ids *IDS) openLiveAnddFilter() *pcap.Handle {
 	var handle *pcap.Handle
 	var filter string
 
-	ids.whitelist = "../whitelist.txt"
+	ids.whitelist = "./whitelist.txt"
 	whitelist := ids.getWhitelist()
 
-	if handle, err = pcap.OpenLive(ids.iface, SNAPLEN, Promiscious, TimeLimite*time.Millisecond); err != nil {
+	if handle, err = pcap.OpenLive(ids.iface, SNAPLEN, ISPROMISCIOUS, TIMELIMITE*time.Millisecond); err != nil {
 		log.Fatal(err)
 	} else {
 		ids.myIpAddress = ids.myIP()

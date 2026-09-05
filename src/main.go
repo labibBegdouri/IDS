@@ -66,6 +66,7 @@ func main() {
 	packetSource.NoCopy = true
 
 	go getPacket(packetSource, channel)
+
 	go loading("Running")
 
 	ticker := time.NewTicker(PERIOD * time.Second)
