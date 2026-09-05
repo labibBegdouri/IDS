@@ -1,10 +1,10 @@
-# NIDS — Network Intrusion Detection System Project
+d# NIDS — Network Intrusion Detection System Project
 
-A Network Intrusion Detection System written in Go, built on top of [`gopacket`](https://github.com/google/gopacket). It captures live traffic on a network interface, tracks per-IP behavioral statistics over sliding time windows, and flags patterns associated with common reconnaissance and flooding attacks.
+A Basic Network Intrusion Detection System written in Go, built on top of [`gopacket`](https://github.com/google/gopacket). It captures live traffic on a network interface, tracks per-IP behavioral statistics over sliding time windows, and flags patterns associated with common reconnaissance and flooding attacks.
 
 ## Goal
 
-Built to gain practical experience in analyzing network traffic and exploring the foundations of cybersecurity. It showcases the ability to write efficient Go code and design systems capable of handling complex, simultaneous tasks.
+Built to gain practical experience in analyzing network traffic and exploring the foundations of cybersecurity. The goal of this project is to become familiar with basic concepts of network and security using GO. And to detect some of the most common tools used for scanning and attacking the host device.
 
 
 ## Detected attack patterns
@@ -81,33 +81,11 @@ On startup, the IDS resolves its own IP on the given interface, loads `whitelist
 |---|---|---|
 | `PERIOD` | Length of each statistics window, in seconds | 4 |
 | `CHANNELSIZE` | Buffer size of the packet channel | 10000 |
-| `TimeLimite` | `pcap` read timeout, in milliseconds | 10 |
+| `TIMELIMITE` | `pcap` read timeout, in milliseconds | 10 |
 | `SNAPLEN` | Maximum bytes captured per packet | 1600 |
-| `Promiscious` | Whether the interface opens in promiscuous mode | true |
+| `ISPROMISCIOUS` | Whether the interface opens in promiscuous mode | true |
 | Whitelist | Path to a file listing IPs excluded from capture | `whitelist.txt` |
 
-### Detection thresholds (per two consecutive windows)
-
-| Constant | Value | Triggers on |
-|---|---|---|
-| `MaxSYNMinusAck` | 5000 | SYN flood |
-| `MaxSSHConnection` | 20 | SSH brute-force |
-| `MaxNbrPortsDistincts` | 30 | Port scan |
-| `MaxFin` | 500 | FIN scan/flood |
-| `MaxNull` | 500 | NULL scan |
-| `MaxXmas` | 500 | XMAS scan |
-| `MaxICMPS` | 6000 | ICMP flood |
-| `MaxUDP` | 5000 | UDP flood |
-| `MaxDNSResMinusReq` | 4000 | DNS amplification |
-
-## Whitelist format
-
-One IP per line. Lines starting with `#` and empty lines are ignored:
-
-```
-# Local gateway
-192.168.1.1
-```
 
 ## Logging
 
